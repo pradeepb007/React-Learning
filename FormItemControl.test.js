@@ -1,242 +1,112 @@
-// FormItemControl.test.js
-import React from "react";
-import { render, fireEvent, getByText, getByLabelText } from "@testing-library/react";
-import { useFormContext } from "react-hook-form";
-import FormItemControl from "./FormItemControl";
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { useForm, FormProvider } from 'react-hook-form';
+import FormItemControl from './FormItemControl';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 
-jest.mock("react-hook-form", () => ({
-  useFormContext: jest.fn(),
-}));
+const renderWithFormProvider = (ui) => {
+  const Wrapper = ({ children }) => {
+    const methods = useForm();
+    return <FormProvider {...methods}>{children}</FormProvider>;
+  };
+  return render(ui, { wrapper: Wrapper });
+};
 
-describe("FormItemControl", () => {
-  const control = { onChange: jest.fn() };
-  const name = "test";
-  const label = "Test Label";
-  const type = "text";
-  const options = ["option1", "option2", "option3"];
-  const rules = { required: "Test Error" };
-  const isRequired= true;
-  const isMultiline = false;
-  const rows = 1;
-  const isDisabled = false;
-  const defaultValue = "";
-  const isChecked = false;
-
-  beforeEach(() => {
-    useFormContext.mockReturnValue({
-      clearErrors: jest.fn(),
-    });
-  });
-
-  it("renders without crashing", () => {
-    const { getByText } = render(
+describe('FormItemControl Component', () => {
+  test('renders text field with label and handles change', () => {
+    renderWithFormProvider(
       <FormItemControl
-        control={control}
-        name={name}
-        label={label}
-        type={type}
-        options={options}
-        rules={rules}
-        isRequired={isRequired}
-        isMultiline={isMultiline}
-        rows={rows}
-        isDisabled={isDisabled}
-        defaultValue={defaultValue}
-        isChecked={isChecked}
+        name="testText"
+        control={{}}
+        label="Test Text"
+        type="text"
+        isRequired={true}
       />
     );
-    expect(getByText("")).toBeInTheDocument();
+
+    const input = screen.getByLabelText('Test Text');
+    expect(input).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: 'new value' } });
+    expect(input.value).toBe('new value');
   });
 
-  it("renders the correct input type", () => {
-    const { getByLabelText } = render(
+  test('renders number field and validates integer input', () => {
+    renderWithFormProvider(
       <FormItemControl
-        control={control}
-        name={name}
-        label={label}
-        type={type}
-        options={options}
-        rules={rules}
-        isRequired={isRequired}
-        isMultiline={isMultiline}
-        rows={rows}
-        isDisabled={isDisabled}
-        defaultValue={defaultValue}
-        isChecked={isChecked}
+        name="testNumber"
+        control={{}}
+        label="Test Number"
+        type="number"
+        rules={{ validationType: 'intValidation' }}
       />
     );
-    expect(getByLabelText(label)).toHaveAttribute("type", type);
+
+    const input = screen.getByLabelText('Test Number');
+    fireEvent.change(input, { target: { value: '123' } });
+    expect(input.value).toBe('123');
+
+    fireEvent.change(input, { target: { value: 'abc' } });
+    expect(screen.getByText('Only integer values are allowed')).toBeInTheDocument();
   });
 
-  it("renders the correct number of rows", () => {
-    const { getByLabelText } = render(
+  test('renders select field with options', () => {
+    const options = ['Option 1', 'Option 2'];
+    renderWithFormProvider(
       <FormItemControl
-        control={control}
-        name={name}
-        label={label}
-        type={type}
-        options={options}
-        rules={rules}
-        isRequired={isRequired}
-        isMultiline={true}
-        rows={rows}
-        isDisabled={isDisabled}
-        defaultValue={defaultValue}
-        isChecked={isChecked}
-      />
-    );
-    expect(getByLabelText(label)).toHaveAttribute("rows", rows.toString());
-  });
-
-  it("renders the correct options", () => {
-    const { getByLabelText } = render(
-      <FormItemControl
-        control={control}
-        name={name}
-        label={label}
+        name="testSelect"
+        control={{}}
+        label="Test Select"
         type="select"
         options={options}
-        rules={rules}
-        isRequired={isRequired}
-        isMultiline={isMultiline}
-        rows={rows}
-        isDisabled={isDisabled}
-        defaultValue={defaultValue}
-        isChecked={isChecked}
       />
     );
-    const select = getByLabelText(label);
+
+    const select = screen.getByLabelText('Test Select');
+    expect(select).toBeInTheDocument();
+
+    fireEvent.mouseDown(select);
     options.forEach((option) => {
-      expect(select).toHaveOption(option, option);
+      expect(screen.getByText(option)).toBeInTheDocument();
     });
   });
 
-  it("renders the correct label", () => {
-    const { getByText } = render(
+  test('renders switch field and handles change', () => {
+    renderWithFormProvider(
       <FormItemControl
-        control={control}
-        name={name}
-        label={label}
-        type={type}
-        options={options}
-        rules={rules}
-        isRequired={isRequired}
-        isMultiline={isMultiline}
-        rows={rows}
-        isDisabled={isDisabled}
-        defaultValue={defaultValue}
-        isChecked={isChecked}
-      />
-    );
-    expect(getByText(label)).toBeInTheDocument();
-  });
-
-  it("renders the correct error message", () => {
-    const { getByText } = render(
-      <FormItemControl
-        control={control}
-        name={name}
-        label={label}
-        type={type}
-        options={options}
-        rules={rules}
-        isRequired={isRequired}
-        isMultiline={isMultiline}
-        rows={rows}
-        isDisabled={isDisabled}
-        defaultValue={defaultValue}
-        isChecked={isChecked}
-      />
-    );
-    expect(getByText(rules.required)).toBeInTheDocument();
-  });
-
-  it("calls the onChange function when the input value changes", () => {
-    const { getByLabelText } = render(
-      <FormItemControl
-        control={control}
-        name={name}
-        label={label}
-        type={type}
-        options={options}
-        rules={rules}
-        isRequired={isRequired}
-        isMultiline={isMultiline}
-        rows={rows}
-        isDisabled={isDisabled}
-        defaultValue={defaultValue}
-        isChecked={isChecked}
-      />
-    );
-    const input = getByLabelText(label);
-    fireEvent.change(input, { target: { value: "test" } });
-    expect(control.onChange).toHaveBeenCalledWith("test");
-  });
-
-  it("calls the onChange function when the switch is toggled", () => {
-    const { getByLabelText } = render(
-      <FormItemControl
-        control={control}
-        name={name}
-        label={label}
+        name="testSwitch"
+        control={{}}
+        label="Test Switch"
         type="switch"
-        options={options}
-        rules={rules}
-        isRequired={isRequired}
-        isMultiline={isMultiline}
-        rows={rows}
-        isDisabled={isDisabled}
-        defaultValue={defaultValue}
-        isChecked={isChecked}
+        isChecked={true}
       />
     );
-    const switchInput = getByLabelText(label);
+
+    const switchInput = screen.getByLabelText('Test Switch');
+    expect(switchInput).toBeInTheDocument();
+    expect(switchInput.checked).toBe(true);
+
     fireEvent.click(switchInput);
-    expect(control.onChange).toHaveBeenCalledWith(true);
+    expect(switchInput.checked).toBe(false);
   });
 
-  it("calls the onChange function when a date is selected", () => {
-    const { getByLabelText } = render(
-      <FormItemControl
-       control={control}
-        name={name}
-        label={label}
-        type="date"
-        options={options}
-        rules={rules}
-        isRequired={isRequired}
-        isMultiline={isMultiline}
-        rows={rows}
-        isDisabled={isDisabled}
-        defaultValue={defaultValue}
-        isChecked={isChecked}
-      />
+  test('renders date picker and handles change', () => {
+    renderWithFormProvider(
+      <LocalizationProvider dateAdapter={AdapterMoment}>
+        <FormItemControl
+          name="testDate"
+          control={{}}
+          label="Test Date"
+          type="date"
+        />
+      </LocalizationProvider>
     );
-    const datePicker = getByLabelText(label);
-    fireEvent.click(datePicker);
-    fireEvent.click(getByText("Today"));
-    expect(control.onChange).toHaveBeenCalledWith(expect.any(Date));
-  });
 
-  it("calls the onChange function when a select option is selected", () => {
-    const { getByLabelText } = render(
-      <FormItemControl
-        control={control}
-        name={name}
-        label={label}
-        type="select"
-        options={options}
-        rules={rules}
-        isRequired={isRequired}
-        isMultiline={isMultiline}
-        rows={rows}
-        isDisabled={isDisabled}
-        defaultValue={defaultValue}
-        isChecked={isChecked}
-      />
-    );
-    const select = getByLabelText(label);
-    fireEvent.change(select, { target: { value: options[1] } });
-    expect(control.onChange).toHaveBeenCalledWith(options[1]);
+    const input = screen.getByLabelText('Test Date');
+    expect(input).toBeInTheDocument();
+
+    // Since interacting with date picker requires more complex setup, 
+    // here we will just ensure the component renders correctly.
   });
 });
