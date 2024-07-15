@@ -1,0 +1,187 @@
+import React, { useEffect, useMemo } from "react";
+import { Box, Stack } from "@mui/material";
+import { useWatch, useFormContext } from "react-hook-form";
+import { useSelector } from "react-redux";
+import FormInputControl from "./FormInputControl";
+
+const Step1Form = ({ control }) => {
+  const { setValue } = useFormContext();
+  const { userData } = useSelector((state) => state.userData);
+  const { settings } = useSelector((state) => state.settings);
+
+  const customerId = userData?.customers[0];
+
+  const { eventsData, eventTypeOptions } = useSelector((state) => state.EventsData);
+
+  const selectedType = useWatch({
+    control,
+    name: "customerType",
+  });
+
+  const currentSubType = useWatch({
+    control,
+    name: "customerSubType",
+  });
+
+  const subTypeOptions = useMemo(() => {
+    if (selectedType && eventsData[selectedType]) {
+      return eventsData[selectedType];
+    } else {
+      return [];
+    }
+  }, [selectedType]);
+
+  useEffect(() => {
+    if (selectedType && !eventsData[selectedType].includes(currentSubType)) {
+      setValue("customerSubType", "");
+    }
+  }, [selectedType, currentSubType, setValue, eventsData]);
+
+  const validateEndDate =
+    (endDateField, startDateField) => (value, allValues) => {
+      const startDate = allValues[startDateField];
+      if (startDate && value && value.isBefore(startDate)) {
+        return `${endDateField} should be after ${startDateField}`;
+      }
+      return true;
+    };
+
+  return (
+    <Box component="div">
+      <h1>Step 1 Form</h1>
+      <Stack direction="row" spacing={2}>
+        {settings.id && (
+          <FormInputControl
+            control={control}
+            name="id"
+            label="ID"
+            type="text"
+            isRequired={true}
+            isDisabled={true}
+            defaultValue={0}
+          />
+        )}
+        {settings.customerId && (
+          <FormInputControl
+            control={control}
+            name="customerId"
+            label="Cust ID"
+            type="text"
+            isRequired={true}
+            isDisabled={true}
+            defaultValue={customerId}
+          />
+        )}
+        {settings.desc && (
+          <FormInputControl
+            control={control}
+            name="desc"
+            label="Description"
+            type="text"
+            isRequired={true}
+            rules={{
+              validationType: "intValidation",
+            }}
+          />
+        )}
+      </Stack>
+
+      <br />
+
+      <Stack direction="row" spacing={2}>
+        {settings.startDate && (
+          <FormInputControl
+            control={control}
+            name="startDate"
+            label="Start Date"
+            type="date"
+            isRequired={true}
+          />
+        )}
+        {settings.endDate && (
+          <FormInputControl
+            control={control}
+            name="endDate"
+            label="End Date"
+            type="date"
+            isRequired={true}
+            rules={{ validate: validateEndDate("End Date", "startDate") }}
+          />
+        )}
+        {settings.startDate2 && (
+          <FormInputControl
+            control={control}
+            name="startDate2"
+            label="Start Date2"
+            type="date"
+          />
+        )}
+        {settings.endDate2 && (
+          <FormInputControl
+            control={control}
+            name="endDate2"
+            label="End Date2"
+            type="date"
+            rules={{ validate: validateEndDate("End Date2", "startDate2") }}
+          />
+        )}
+      </Stack>
+      <br />
+
+      <Stack direction="row" spacing={2}>
+        {settings.customerType && (
+          <FormInputControl
+            control={control}
+            name="customerType"
+            label="Customer Type"
+            type="select"
+            isRequired={true}
+            options={eventTypeOptions}
+          />
+        )}
+
+        {settings.customerSubType && (
+          <FormInputControl
+            control={control}
+            name="customerSubType"
+            label="Customer Sub Type"
+            type="select"
+            isRequired={true}
+            options={
+              subTypeOptions.length ? subTypeOptions : ["Please select a type"]
+            }
+            rules={{
+              validate: (value) => (subTypeOptions.length ? !!value : true),
+            }}
+          />
+        )}
+      </Stack>
+
+      <br />
+
+      <Stack direction="row" spacing={2}>
+        {settings.demand && (
+          <FormInputControl
+            control={control}
+            name="demand"
+            label="Demand"
+            type="switch"
+            isChecked={false}
+          />
+        )}
+        {settings.comment && (
+          <FormInputControl
+            control={control}
+            name="comment"
+            label="Comment"
+            type="text"
+            isMultiline={true}
+            rows="3"
+          />
+        )}
+      </Stack>
+    </Box>
+  );
+};
+
+export default Step1Form;
