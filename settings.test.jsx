@@ -43,7 +43,21 @@ describe("Settings Component", () => {
     expect(screen.getByLabelText("Comment")).toBeChecked();
     expect(screen.getByLabelText("Demand")).not.toBeChecked();
   });
+test("handles accordion panel change", async () => {
+    render(<Settings handleClose={handleClose} />);
 
+    // Simulate clicking on the accordion panel
+    fireEvent.click(screen.getByText("Panel 1"));
+
+    // Check that the accordion panel state is updated
+    expect(screen.getByText("Panel 1")).toHaveAttribute("aria-expanded", "true");
+
+    // Simulate clicking again to collapse the accordion panel
+    fireEvent.click(screen.getByText("Panel 1"));
+
+    // Check that the accordion panel state is updated to collapsed
+    expect(screen.getByText("Panel 1")).toHaveAttribute("aria-expanded", "false");
+  });
   test("handles checkbox changes and dispatches action correctly", async () => {
     render(<Settings handleClose={handleClose} />);
 
