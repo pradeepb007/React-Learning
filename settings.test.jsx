@@ -1,4 +1,119 @@
 import React from "react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
+import "@testing-library/jest-dom/extend-expect";
+import { useDispatch, useSelector } from "react-redux";
+import Settings from "./Settings";
+import { updateSettings } from "../actions/settingsActions";
+
+// Mocking the necessary modules
+jest.mock("react-redux", () => ({
+  useDispatch: jest.fn(),
+  useSelector: jest.fn(),
+}));
+
+jest.mock("../actions/settingsActions", () => ({
+  updateSettings: jest.fn(),
+}));
+
+describe("Settings Component", () => {
+  let dispatch;
+  let handleClose;
+
+  beforeEach(() => {
+    dispatch = jest.fn();
+    handleClose = jest.fn();
+    useDispatch.mockReturnValue(dispatch);
+    useSelector.mockReturnValue({
+      settings: { comment: true, demand: false },
+      isLoading: false,
+    });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test("renders Settings component with initial settings", () => {
+    render(<Settings handleClose={handleClose} />);
+
+    // Check that accordion panels and checkboxes are rendered
+    expect(screen.getByText("Panel 1")).toBeInTheDocument();
+    expect(screen.getByText("Comment")).toBeInTheDocument();
+    expect(screen.getByText("Demand")).toBeInTheDocument();
+    expect(screen.getByLabelText("Comment")).toBeChecked();
+    expect(screen.getByLabelText("Demand")).not.toBeChecked();
+  });
+
+  test("handles checkbox changes and dispatches action correctly", async () => {
+    render(<Settings handleClose={handleClose} />);
+
+    // Simulate clicking on a checkbox
+    fireEvent.click(screen.getByLabelText("Demand"));
+
+    // Check that the dispatch function was called with the correct action
+    expect(dispatch).toHaveBeenCalledWith(updateSettings({ comment: true, demand: true }));
+  });
+
+  test("handles save action and shows snackbar", async () => {
+    render(<Settings handleClose={handleClose} />);
+
+    // Simulate clicking the Save button
+    fireEvent.click(screen.getByText("Save"));
+
+    // Check that the updateSettings action was dispatched
+    expect(dispatch).toHaveBeenCalledWith(updateSettings({ comment: true, demand: false }));
+
+    // Mock the API response for updateSettings action
+    updateSettings.mockResolvedValueOnce({ success: true });
+
+    // Ensure that the Snackbar appears after saving
+    await act(async () => {
+      expect(screen.getByText("Save success")).toBeInTheDocument();
+    });
+  });
+
+  test("handles close action", async () => {
+    render(<Settings handleClose={handleClose} />);
+
+    // Simulate clicking the Close button
+    fireEvent.click(screen.getByText("Close"));
+
+    // Check that the handleClose function was called
+    expect(handleClose).toHaveBeenCalledTimes(1);
+  });
+
+  test("handles loading state when updating settings", async () => {
+    useSelector.mockReturnValueOnce({
+      settings: { comment: true, demand: false },
+      isLoading: true,
+    });
+
+    render(<Settings handleClose={handleClose} />);
+
+    // Check that the loading state is reflected in UI
+    expect(screen.getByText("Saving...")).toBeInTheDocument();
+  });
+
+  test("handles error state when update settings fails", async () => {
+    const errorMessage = "Failed to update settings";
+    updateSettings.mockRejectedValueOnce(new Error(errorMessage));
+
+    render(<Settings handleClose={handleClose} />);
+
+    // Simulate clicking the Save button
+    fireEvent.click(screen.getByText("Save"));
+
+    // Check that the error message is displayed
+    await act(async () => {
+      expect(screen.getByText(errorMessage)).toBeInTheDocument();
+    });
+  });
+});
+
+
+
+
+import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/extend-expect";
 import { useDispatch, useSelector } from "react-redux";
@@ -222,6 +337,8 @@ describe("Settings Page Tests", () => {
     });
   });
 });
+
+
 
 
 
