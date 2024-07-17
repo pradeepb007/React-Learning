@@ -86,6 +86,20 @@ test("handles accordion panel change", async () => {
     });
   });
 
+  test("handles loading state when updating settings", async () => {
+    useSelector.mockReturnValueOnce({
+      settings: { comment: true, demand: false },
+      isLoading: true,
+      isSaving: true,
+    });
+
+    render(<Settings handleClose={handleClose} />);
+
+    // Check that the saving state is reflected in UI
+    expect(screen.getByText("Saving...")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument(); // Snackbar should not be rendered
+  });
+
   test("handles close action", async () => {
     render(<Settings handleClose={handleClose} />);
 
