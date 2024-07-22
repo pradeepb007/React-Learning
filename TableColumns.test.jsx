@@ -153,3 +153,105 @@ describe("TableColumns", () => {
     expect(onChangeProps.value).not.toBe(newValue);
   });
 });
+
+
+
+test("renders correct Cell components", () => {
+  const { result } = renderHook(() =>
+    TableColumns({
+      selectedUnit,
+      convertLength: mockConvertLength,
+      handleCellEdit: mockHandleCellEdit,
+      editedValues: {},
+    })
+  );
+
+  const columns = result.current;
+
+  // Test Cell components
+  expect(columns[1].Cell).toBeDefined();
+  expect(columns[2].Cell).toBeDefined();
+  expect(columns[3].Cell).toBeDefined();
+  expect(columns[4].Cell).toBeDefined();
+});
+
+test("renders editable Cell component for 'editedUnit' column", () => {
+  const { result } = renderHook(() =>
+    TableColumns({
+      selectedUnit,
+      convertLength: mockConvertLength,
+      handleCellEdit: mockHandleCellEdit,
+      editedValues: {},
+    })
+  );
+
+  const columns = result.current;
+  const editedUnitColumn = columns[3];
+
+  expect(editedUnitColumn.enableEditing).toBeDefined();
+  expect(editedUnitColumn.muiEditTextFieldProps).toBeDefined();
+  expect(editedUnitColumn.onBlur).toBeDefined();
+});
+
+test("calls handleLocalChange on input change", () => {
+  const { result } = renderHook(() =>
+    TableColumns({
+      selectedUnit,
+      convertLength: mockConvertLength,
+      handleCellEdit: mockHandleCellEdit,
+      editedValues: {},
+    })
+  );
+
+  const columns = result.current;
+  const editedUnitColumn = columns[3];
+  const rowIndex = 0;
+  const columnId = "editedUnit";
+  const newValue = "10";
+
+  editedUnitColumn.muiEditTextFieldProps.onChange({ target: { value: newValue } });
+
+  expect(result.current[0].localValues[rowIndex][columnId]).toBe(newValue);
+});
+
+test("calls handleBlur on blur", () => {
+  const { result } = renderHook(() =>
+    TableColumns({
+      selectedUnit,
+      convertLength: mockConvertLength,
+      handleCellEdit: mockHandleCellEdit,
+      editedValues: {},
+    })
+  );
+
+  const columns = result.current;
+  const editedUnitColumn = columns[3];
+  const rowIndex = 0;
+  const columnId = "editedUnit";
+
+  editedUnitColumn.onBlur(rowIndex, columnId);
+
+  expect(mockHandleCellEdit).toHaveBeenCalledTimes(1);
+  expect(mockHandleCellEdit).toHaveBeenCalledWith(rowIndex, columnId, result.current[0].localValues[rowIndex][columnId]);
+});
+
+test("uses localValues for editedUnit column", () => {
+  const { result } = renderHook(() =>
+    TableColumns({
+      selectedUnit,
+      convertLength: mockConvertLength,
+      handleCellEdit: mockHandleCellEdit,
+      editedValues: {},
+    })
+  );
+
+  const columns = result.current;
+  const editedUnitColumn = columns[3];
+  const rowIndex = 0;
+  const columnId = "editedUnit";
+  const localValue = "20";
+
+  result.current[0].localValues[rowIndex] = { [columnId]: localValue };
+
+  expect(editedUnitColumn.muiEditTextFieldProps.value).toBe(localValue);
+});
