@@ -93,3 +93,67 @@ describe('TableMain component', () => {
     expect(setSelectedUnit).toHaveBeenCalledTimes(1);
   });
 });
+
+
+
+
+
+
+
+
+
+
+
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import TableMain from './TableMain'; // Adjust the import path as necessary
+
+describe('TableMain Component', () => {
+  it('renders without crashing', () => {
+    render(<TableMain />);
+    expect(screen.getByText(/Select Units:/)).toBeInTheDocument();
+  });
+
+  it('opens the unit selection menu when the button is clicked', () => {
+    render(<TableMain />);
+    fireEvent.click(screen.getByLabelText(/more/));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+
+  it('changes the selected unit when a unit button is clicked', () => {
+    render(<TableMain />);
+    fireEvent.click(screen.getByLabelText(/more/));
+    fireEvent.click(screen.getByText('mm'));
+    expect(screen.getByText('mm')).toHaveClass('MuiButton-contained');
+  });
+
+  it('opens the confirmation dialog when there are unsaved changes and unit is changed', () => {
+    render(<TableMain />);
+    // Simulate editing values
+    fireEvent.click(screen.getByLabelText(/more/));
+    fireEvent.click(screen.getByText('mm'));
+    fireEvent.click(screen.getByText('Confirm'));
+    expect(screen.getByText('Confirm Unit Change')).toBeInTheDocument();
+  });
+
+  it('closes the confirmation dialog when cancel is clicked', () => {
+    render(<TableMain />);
+    // Simulate editing values
+    fireEvent.click(screen.getByLabelText(/more/));
+    fireEvent.click(screen.getByText('mm'));
+    fireEvent.click(screen.getByText('Cancel'));
+    expect(screen.queryByText('Confirm Unit Change')).not.toBeInTheDocument();
+  });
+
+  it('resets edited values and changes the unit when confirm is clicked', () => {
+    render(<TableMain />);
+    // Simulate editing values
+    fireEvent.click(screen.getByLabelText(/more/));
+    fireEvent.click(screen.getByText('mm'));
+    fireEvent.click(screen.getByText('Confirm'));
+    expect(screen.queryByText('Confirm Unit Change')).not.toBeInTheDocument();
+    // Assert the unit change
+    expect(screen.getByText('mm')).toHaveClass('MuiButton-contained');
+  });
+});
