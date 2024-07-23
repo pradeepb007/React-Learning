@@ -431,3 +431,97 @@ test("uses localValues for editedUnit column", () => {
 
   expect(editedUnitColumn.muiEditTextFieldProps.value).toBe(localValue);
 });
+
+
+
+
+
+
+import { renderHook } from "@testing-library/react-hooks";
+import TableColumns from "./TableColumns";
+
+describe("TableColumns", () => {
+  const mockConvertLength = jest.fn((value) => value * 10);
+  const mockHandleCellEdit = jest.fn();
+  const selectedUnit = "cm";
+
+  test("returns correct columns", () => {
+    const { result } = renderHook(() =>
+      TableColumns({
+        selectedUnit,
+        convertLength: mockConvertLength,
+        handleCellEdit: mockHandleCellEdit,
+        editedValues: {},
+      })
+    );
+
+    const columns = result.current;
+
+    // Test for all columns
+    expect(columns).toHaveLength(5);
+
+    // Check column headers
+    const headers = ["Weeks", "Percentage", "Units", "Edit Units", "Final Unit"];
+    headers.forEach((header, index) => {
+      expect(columns[index].header).toBe(header);
+    });
+  });
+
+  test("handleLocalChange is called when editing a cell", () => {
+    const { result } = renderHook(() =>
+      TableColumns({
+        selectedUnit,
+        convertLength: mockConvertLength,
+        handleCellEdit: mockHandleCellEdit,
+        editedValues: {},
+      })
+    );
+
+    const columns = result.current;
+    const rowIndex = 0;
+    const columnId = "editedUnit";
+    const value = "10";
+
+    columns[3].muiEditTextFieldProps.onChange({ target: { value } }, rowIndex, columnId);
+
+    expect(result.current[1].muiEditTextFieldProps.value).toBe(value);
+  });
+
+  test("handleBlur is called when a cell loses focus", () => {
+    const { result } = renderHook(() =>
+      TableColumns({
+        selectedUnit,
+        convertLength: mockConvertLength,
+        handleCellEdit: mockHandleCellEdit,
+        editedValues: {},
+      })
+    );
+
+    const columns = result.current;
+    const rowIndex = 0;
+    const columnId = "editedUnit";
+
+    columns[3].onBlur(rowIndex, columnId);
+
+    expect(mockHandleCellEdit).toHaveBeenCalledTimes(1);
+  });
+
+  test("cell values are converted correctly", () => {
+    const { result } = renderHook(() =>
+      TableColumns({
+        selectedUnit,
+        convertLength: mockConvertLength,
+        handleCellEdit: mockHandleCellEdit,
+        editedValues: {},
+      })
+    );
+
+    const columns = result.current;
+    const row = { original: { editedUnit: 5 } };
+    const column = { id: "editedUnit" };
+
+    const cellValue = columns[3].Cell({ row, column });
+
+    expect(cellValue).toBe("50");
+  });
+});
