@@ -50,7 +50,7 @@ describe("TableColumns", () => {
       });
     });
 
-    const cellValue = editUnitColumn.muiEditTextFieldProps({ row, column }).value;
+    const cellValue = result.current.find(col => col.accessorKey === "editedUnit").muiEditTextFieldProps({ row, column }).value;
     expect(cellValue).toBe("20");
   });
 
@@ -105,5 +105,3 @@ describe("TableColumns", () => {
     expect(cellContent).toBe(50); // Because mockConvertLength multiplies by 10
   });
 });
-
-export default TableColumns;
