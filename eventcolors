@@ -1,0 +1,69 @@
+import React from 'eact';
+import { Avatar, Tooltip } from '@mui/material';
+
+const events = [
+  {
+    name: 'Event 1',
+    startDate: '2024-07-29',
+    endDate: '2024-07-30',
+    subEvent: 'Sub Event 1',
+    type: 'Type A',
+  },
+  {
+    name: 'Event 2',
+    startDate: '2024-07-31',
+    endDate: '2024-08-01',
+    subEvent: 'Sub Event 2',
+    type: 'Type B',
+  },
+  {
+    name: 'Event 3',
+    startDate: '2024-08-02',
+    endDate: '2024-08-03',
+    subEvent: 'Sub Event 3',
+    type: 'Type A',
+  },
+  // Add more events here...
+];
+
+const getRandomColor = () => {
+  const letters = '0123456789ABCDEF';
+  let color = '#';
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+};
+
+const eventColors = {};
+
+const EventAvatar = ({ event }) => {
+  const firstLetter = event.name.charAt(0).toUpperCase();
+  let color;
+
+  if (!eventColors[event.type]) {
+    eventColors[event.type] = getRandomColor();
+  }
+
+  color = eventColors[event.type];
+
+  return (
+    <Tooltip title={`${event.name} - ${event.startDate} to ${event.endDate} - ${event.subEvent}`}>
+      <Avatar sx={{ bgcolor: color, width: 30, height: 30 }}>
+        {firstLetter}
+      </Avatar>
+    </Tooltip>
+  );
+};
+
+const EventList = () => {
+  return (
+    <div>
+      {events.map((event, index) => (
+        <EventAvatar key={index} event={event} />
+      ))}
+    </div>
+  );
+};
+
+export default EventList;
