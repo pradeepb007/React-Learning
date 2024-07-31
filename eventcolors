@@ -67,3 +67,50 @@ const EventList = () => {
 };
 
 export default EventList;
+
+
+
+import React from 'react';
+import { Tooltip, Avatar } from '@mui/material';
+
+// Function to generate a consistent color based on the event type
+const getColorFromType = (type) => {
+  let hash = 0;
+  for (let i = 0; i < type.length; i++) {
+    hash = type.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const color = `hsl(${hash % 360}, 70%, 50%)`; // Generate a HSL color
+  return color;
+};
+
+const EventAvatar = ({ event }) => {
+  const firstLetter = event.name.charAt(0).toUpperCase();
+  const color = getColorFromType(event.type);
+
+  return (
+    <Tooltip
+      title={
+        <>
+          <div>{`Event Name: ${event.name}`}</div>
+          <div>{`Subtype: ${event.subEvent}`}</div>
+          <div>{`Dates: ${event.startDate} to ${event.endDate}`}</div>
+        </>
+      }
+    >
+      <Avatar sx={{ bgcolor: color, width: 30, height: 30 }}>
+        {firstLetter}
+      </Avatar>
+    </Tooltip>
+  );
+};
+const EventList = () => {
+  return (
+    <div>
+      {events.map((event, index) => (
+        <EventAvatar key={index} event={event} />
+      ))}
+    </div>
+  );
+};
+
+export default EventList;
