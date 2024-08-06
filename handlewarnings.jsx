@@ -10,78 +10,60 @@ const onSubmit = async (data) => {
     setIsLoading(false);
     const response = error.response?.data;
 
-    const transformErrors = (responseArray) => {
-      return responseArray?.reduce((acc, { field, error }) => {
+    const transformMessages = (messagesArray) => {
+      return messagesArray?.reduce((acc, { field, error }) => {
         acc[field] = error;
         return acc;
       }, {});
     };
 
-    const transformedErrors = transformErrors(response?.errors);
-    const transformedWarnings = transformErrors(response?.warnings);
+    const transformedErrors = transformMessages(response?.errors);
+    const transformedWarnings = transformMessages(response?.warnings);
 
-    if (Object.keys(transformedErrors).length > 0) {
-      // Process errors
-      for (const field in transformedErrors) {
-        setError(field, { type: "server", message: transformedErrors[field] });
+    const handleFieldMessages = (messages) => {
+      for (const field in messages) {
+        setError(field, { type: "server", message: messages[field] });
       }
 
-      const errorFiledIndices = [];
+      const fieldIndices = [];
       Object.keys(stepFileds).forEach((index) => {
-        if (stepFileds[index].some((field) => transformedErrors[field])) {
-          errorFiledIndices.push(parseInt(index));
+        if (stepFileds[index].some((field) => messages[field])) {
+          fieldIndices.push(parseInt(index));
         }
       });
 
       setStepErrors((prevErrors) => ({
         ...prevErrors,
-        ...errorFiledIndices.reduce((acc, index) => {
+        ...fieldIndices.reduce((acc, index) => {
           acc[index] = true;
           return acc;
         }, {}),
       }));
 
-      const stepNumbers = errorFiledIndices.map((index) => {
-        return `Step ${index + 1}`;
-      });
-      const errorMessage = stepNumbers.join(", ");
+      const stepNumbers = fieldIndices.map((index) => `Step ${index + 1}`);
+      return stepNumbers.join(", ");
+    };
+
+    if (Object.keys(transformedErrors).length > 0) {
+      const errorMessage = handleFieldMessages(transformedErrors);
 
       setIsSnackOpen(true);
       setSnackBar({
         message: <span>Error {errorMessage}</span>,
       });
     } else if (Object.keys(transformedWarnings).length > 0) {
-      // Process warnings if no errors
-      for (const field in transformedWarnings) {
-        setWarning(field, { type: "warning", message: transformedWarnings[field] });
-      }
-
-      const warningFiledIndices = [];
-      Object.keys(stepFileds).forEach((index) => {
-        if (stepFileds[index].some((field) => transformedWarnings[field])) {
-          warningFiledIndices.push(parseInt(index));
-        }
-      });
-
-      setStepWarnings((prevWarnings) => ({
-        ...prevWarnings,
-        ...warningFiledIndices.reduce((acc, index) => {
-          acc[index] = true;
-          return acc;
-        }, {}),
-      }));
-
-      const stepNumbers = warningFiledIndices.map((index) => {
-        return `Step ${index + 1}`;
-      });
-      const warningMessage = stepNumbers.join(", ");
+      const warningMessage = handleFieldMessages(transformedWarnings);
 
       // Show popup for warnings confirmation
       const confirmSubmit = window.confirm(`There are warnings in ${warningMessage}. Do you want to proceed?`);
       if (confirmSubmit) {
-        // Re-submit the data ignoring warnings
-        await addNewrecord(formattedData);
-        handleclose(null, "add");
+        try {
+          await addNewrecord(formattedData);
+          handleclose(null, "add");
+        } catch (error) {
+          setIsLoading(false);
+          // Handle any errors during re-submission if needed
+        }
       }
     }
   }
