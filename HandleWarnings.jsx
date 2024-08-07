@@ -122,3 +122,32 @@ const handleWarningDialogClose = (proceed) => {
   message={snackBar.message}
   severity={snackBar.severity}
 />
+
+
+{
+  accessorKey: "custID",
+  header: "Cust Id",
+  muiEditTextFieldProps: (cell) => {
+    const error = validationErrors[cell.row.index]?.custID;
+    const warning = validationWarnings[cell.row.index]?.custID;
+    const isWarning = !!warning;
+
+    return {
+      required: true,
+      variant: "outlined",
+      color: isWarning ? 'warning' : 'primary',
+      error: !!error && !isWarning,
+      helperText: error ? (
+        <span style={{ color: isWarning ? theme.palette.warning.main : theme.palette.error.main }}>
+          {isWarning ? warning : error}
+        </span>
+      ) : (
+        ""
+      ),
+      onChange: (event) => {
+        handleChnage(event, "integerValidation", "custID");
+      },
+    };
+  }
+},
+
