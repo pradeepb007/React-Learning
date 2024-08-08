@@ -3,9 +3,10 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import CommonDialog from './CommonDialog';
 import '@testing-library/jest-dom/extend-expect';
 
-describe('CommonDialog Component', () => {
+test('renders CommonDialog and checks interactions', () => {
   const mockHandleClose = jest.fn();
   const mockHandleConfirm = jest.fn();
+
   const defaultProps = {
     open: true,
     title: 'Dialog Title',
@@ -16,35 +17,29 @@ describe('CommonDialog Component', () => {
     cancelText: 'Cancel',
   };
 
-  beforeEach(() => {
-    render(<CommonDialog {...defaultProps} />);
-  });
+  render(<CommonDialog {...defaultProps} />);
 
-  it('renders dialog title', () => {
-    expect(screen.getByText('Dialog Title')).toBeInTheDocument();
-  });
+  // Check if title is rendered
+  expect(screen.getByText('Dialog Title')).toBeInTheDocument();
 
-  it('renders dialog content', () => {
-    expect(screen.getByText('Dialog Content')).toBeInTheDocument();
-  });
+  // Check if content is rendered
+  expect(screen.getByText('Dialog Content')).toBeInTheDocument();
 
-  it('renders confirm button with correct text', () => {
-    expect(screen.getByText('Confirm')).toBeInTheDocument();
-  });
+  // Check if confirm button is rendered
+  const confirmButton = screen.getByText('Confirm');
+  expect(confirmButton).toBeInTheDocument();
 
-  it('renders cancel button with correct text', () => {
-    expect(screen.getByText('Cancel')).toBeInTheDocument();
-  });
+  // Check if cancel button is rendered
+  const cancelButton = screen.getByText('Cancel');
+  expect(cancelButton).toBeInTheDocument();
 
-  it('calls handleClose when cancel button is clicked', () => {
-    fireEvent.click(screen.getByText('Cancel'));
-    expect(mockHandleClose).toHaveBeenCalledTimes(1);
-  });
+  // Simulate click on cancel button and check if handleClose is called
+  fireEvent.click(cancelButton);
+  expect(mockHandleClose).toHaveBeenCalledTimes(1);
 
-  it('calls handleConfirm when confirm button is clicked', () => {
-    fireEvent.click(screen.getByText('Confirm'));
-    expect(mockHandleConfirm).toHaveBeenCalledTimes(1);
-  });
+  // Simulate click on confirm button and check if handleConfirm is called
+  fireEvent.click(confirmButton);
+  expect(mockHandleConfirm).toHaveBeenCalledTimes(1);
 });
 
 
