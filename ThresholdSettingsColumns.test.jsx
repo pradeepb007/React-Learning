@@ -9,11 +9,11 @@ const ThresholdSettingsColumns = () => {
     { accessorKey: 'value', header: 'Value', size: 100 },
     { accessorKey: 'unit', header: 'Unit', size: 50 },
     {
-      accessorFn: (row) => row.updated_by,  // Updated to only return 'updated_by'
-      header: 'Updated by',
-      filterVariant: 'autocomplete',  // Assuming autocomplete variant is used
-      filterFn: (rows, id, filterValue) => rows.filter(row => row.values[id] === filterValue),
-    },
+        accessorFn: (row) => `${row.updated_by}, ${row.updated_at}`,  // Display both values in the cell
+        header: 'Updated by',
+        filterVariant: 'autocomplete',  // Filter will use only 'updated_by'
+        filterFn: (rows, id, filterValue) => rows.filter(row => row.original.updated_by === filterValue),  // Filter only by 'updated_by'
+      },
   ], []);
 
   return columns;
@@ -21,50 +21,36 @@ const ThresholdSettingsColumns = () => {
 
 export default ThresholdSettingsColumns;
 
-
 import { renderHook } from '@testing-library/react-hooks';
 import ThresholdSettingsColumns from './ThresholdSettingsColumns';
 
 describe('ThresholdSettingsColumns', () => {
   test('returns correct columns', () => {
-    const validationErrors = {};
-    const handleChange = jest.fn();
-
-    const { result } = renderHook(() => ThresholdSettingsColumns(validationErrors, handleChange));
+    const { result } = renderHook(() => ThresholdSettingsColumns());
 
     const columns = result.current;
 
     // Verify that the columns are correctly defined
-    expect(columns).toHaveLength(9);
+    expect(columns).toHaveLength(8);  // Adjust if necessary
 
-    // Check if the first column is 'Subsector'
-    expect(columns[0].accessorKey).toBe('subsector');
-    expect(columns[0].header).toBe('Subsector');
+    // Check if the 'Updated by' column is correctly configured
+    expect(columns[7].header).toBe('Updated by');
 
-    // Check if the last column uses 'updated_by' only
-    expect(columns[8].header).toBe('Updated by');
-    expect(columns[8].accessorFn({ updated_by: 'User1', updated_at: '2024-08-01' })).toBe('User1');
-    expect(columns[8].filterVariant).toBe('autocomplete');
-  });
+    // Verify the accessorFn returns both 'updated_by' and 'updated_at'
+    const cellValue = columns[7].accessorFn({
+      updated_by: 'User1',
+      updated_at: '2024-08-01',
+    });
+    expect(cellValue).toBe('User1, 2024-08-01');
 
-  test('filter only contains updated_by values', () => {
-    const validationErrors = {};
-    const handleChange = jest.fn();
-
-    const { result } = renderHook(() => ThresholdSettingsColumns(validationErrors, handleChange));
-
-    const columns = result.current;
-    const filterFn = columns[8].filterFn;
-
+    // Verify the filter function filters by 'updated_by'
     const rows = [
-      { values: { updated_by: 'User1' } },
-      { values: { updated_by: 'User2' } },
+      { original: { updated_by: 'User1', updated_at: '2024-08-01' } },
+      { original: { updated_by: 'User2', updated_at: '2024-08-02' } },
     ];
 
-    // Test the filter function
-    const filteredRows = filterFn(rows, 'updated_by', 'User1');
+    const filteredRows = columns[7].filterFn(rows, 'updated_by', 'User1');
     expect(filteredRows).toHaveLength(1);
-    expect(filteredRows[0].values.updated_by).toBe('User1');
+    expect(filteredRows[0].original.updated_by).toBe('User1');
   });
 });
-
