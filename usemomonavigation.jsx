@@ -1,3 +1,41 @@
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUserProfile, fetchCountries } from './actions';
+
+const NavigationComponent = () => {
+  const dispatch = useDispatch();
+  const activeAccount = useSelector(state => state.activeAccount);
+  const hasFetchData = useSelector(state => state.hasFetchData);
+
+  const fetchData = async () => {
+    const profileFetched = localStorage.getItem('profileFetched');
+
+    if (activeAccount && !profileFetched) {
+      await dispatch(fetchUserProfile());
+      localStorage.setItem('profileFetched', 'true');
+    } else if (!activeAccount) {
+      localStorage.removeItem('profileFetched');
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [activeAccount, dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchCountries());
+  }, [dispatch]);
+
+  // Other component code
+};
+
+export default NavigationComponent;
+
+
+
+
+
+
 import React, { useState, useEffect, useMemo } from 'react';
 
 const Navigation = () => {
