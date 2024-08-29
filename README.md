@@ -8,7 +8,7 @@
 *** Thanks again! Now go create something AMAZING! :D
 -->
 
-
+[Azure MSAL React]: https://img.shields.io/badge/Azure_MSAL_React-0078D4?style=for-the-badge&logo=microsoft&logoColor=white
 
 <!-- PROJECT SHIELDS -->
 <!--
