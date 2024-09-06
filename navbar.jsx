@@ -1,81 +1,126 @@
-import React, { useState } from 'react';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import Collapse from '@mui/material/Collapse';
-import ExpandLess from '@mui/icons-material/ExpandLess';
-import ExpandMore from '@mui/icons-material/ExpandMore';
-import InboxIcon from '@mui/icons-material/Inbox';
-import ReportIcon from '@mui/icons-material/Report';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import SubdirectoryArrowRightIcon from '@mui/icons-material/SubdirectoryArrowRight';
+import React from 'react';
+import { NavLink, BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { FaHome, FaUser, FaCog } from 'react-icons/fa';
+import './Navbar.css'; // You can style using CSS or styled-components
 
-const NavigationMenu = () => {
-  const [openReports, setOpenReports] = useState(false);
-  const [openSubMenu, setOpenSubMenu] = useState(false);
-
-  const handleReportsClick = () => {
-    setOpenReports(!openReports);
-  };
-
-  const handleSubMenuClick = () => {
-    setOpenSubMenu(!openSubMenu);
-  };
-
+const Navbar = () => {
   return (
-    <List component="nav">
-      {/* Dashboard */}
-      <ListItem button>
-        <ListItemIcon>
-          <DashboardIcon />
-        </ListItemIcon>
-        <ListItemText primary="Dashboard" />
-      </ListItem>
+    <Router>
+      <nav className="navbar">
+        <ul className="nav-menu">
+          <li>
+            <NavLink
+              to="/"
+              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+            >
+              <FaHome />
+              <span>Home</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/user"
+              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+            >
+              <FaUser />
+              <span>User</span>
+            </NavLink>
+            <ul className="sub-menu">
+              <li>
+                <NavLink
+                  to="/user/profile"
+                  className={({ isActive }) => (isActive ? 'sub-link active' : 'sub-link')}
+                >
+                  Profile
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/user/settings"
+                  className={({ isActive }) => (isActive ? 'sub-link active' : 'sub-link')}
+                >
+                  Settings
+                </NavLink>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <NavLink
+              to="/settings"
+              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+            >
+              <FaCog />
+              <span>Settings</span>
+            </NavLink>
+          </li>
+        </ul>
+      </nav>
 
-      {/* Reports Dropdown */}
-      <ListItem button onClick={handleReportsClick}>
-        <ListItemIcon>
-          <ReportIcon />
-        </ListItemIcon>
-        <ListItemText primary="Reports" />
-        {openReports ? <ExpandLess /> : <ExpandMore />}
-      </ListItem>
-      <Collapse in={openReports} timeout="auto" unmountOnExit>
-        <List component="div" disablePadding>
-          <ListItem button sx={{ pl: 4 }} onClick={handleSubMenuClick}>
-            <ListItemIcon>
-              <InboxIcon />
-            </ListItemIcon>
-            <ListItemText primary="Submenu Item" />
-            {openSubMenu ? <ExpandLess /> : <ExpandMore />}
-          </ListItem>
-          <Collapse in={openSubMenu} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              <ListItem button sx={{ pl: 8 }}>
-                <ListItemIcon>
-                  <SubdirectoryArrowRightIcon />
-                </ListItemIcon>
-                <ListItemText primary="Nested Item 1" />
-              </ListItem>
-              <ListItem button sx={{ pl: 8 }}>
-                <ListItemIcon>
-                  <SubdirectoryArrowRightIcon />
-                </ListItemIcon>
-                <ListItemText primary="Nested Item 2" />
-              </ListItem>
-            </List>
-          </Collapse>
-          <ListItem button sx={{ pl: 4 }}>
-            <ListItemIcon>
-              <InboxIcon />
-            </ListItemIcon>
-            <ListItemText primary="Report 2" />
-          </ListItem>
-        </List>
-      </Collapse>
-    </List>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/user" element={<User />} />
+        <Route path="/user/profile" element={<UserProfile />} />
+        <Route path="/user/settings" element={<UserSettings />} />
+        <Route path="/settings" element={<Settings />} />
+      </Routes>
+    </Router>
   );
 };
 
-export default NavigationMenu;
+// Placeholder components for the routes
+const Home = () => <div>Home Page</div>;
+const User = () => <div>User Page</div>;
+const UserProfile = () => <div>User Profile</div>;
+const UserSettings = () => <div>User Settings</div>;
+const Settings = () => <div>Settings Page</div>;
+
+export default Navbar;
+
+.navbar {
+  background-color: #333;
+  padding: 10px;
+}
+
+.nav-menu {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-link {
+  color: #fff;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+}
+
+.nav-link span {
+  margin-left: 5px;
+}
+
+.nav-link.active {
+  background-color: #fff;
+  color: #333;
+}
+
+.sub-menu {
+  list-style: none;
+  padding-left: 20px;
+  display: none;
+}
+
+.nav-menu > li:hover .sub-menu {
+  display: block;
+}
+
+.sub-link {
+  color: #ddd;
+  text-decoration: none;
+  padding: 5px 10px;
+  display: block;
+}
+
+.sub-link.active {
+  color: #333;
+}
