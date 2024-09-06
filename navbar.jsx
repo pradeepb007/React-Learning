@@ -124,3 +124,119 @@ export default Navbar;
 .sub-link.active {
   color: #333;
 }
+
+
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import { FaHome, FaUser, FaCog } from 'react-icons/fa';
+import './NavMenu.css';  // Add a custom CSS file for styling
+
+const NavMenu = () => {
+  return (
+    <nav className="nav-menu">
+      <ul>
+        <li>
+          <NavLink to="/" exact activeClassName="active">
+            <FaHome />
+            <span>Home</span>
+          </NavLink>
+        </li>
+        <li className="has-submenu">
+          <NavLink to="/user" activeClassName="active" className="parent-menu">
+            <FaUser />
+            <span>User</span>
+          </NavLink>
+          <ul className="submenu">
+            <li>
+              <NavLink to="/user/profile" activeClassName="active-submenu">
+                Profile
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/user/settings" activeClassName="active-submenu">
+                Settings
+              </NavLink>
+            </li>
+          </ul>
+        </li>
+        <li>
+          <NavLink to="/settings" activeClassName="active">
+            <FaCog />
+            <span>Settings</span>
+          </NavLink>
+        </li>
+      </ul>
+    </nav>
+  );
+};
+
+export default NavMenu;
+
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  width: 200px;
+}
+
+.nav-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-menu li {
+  margin-bottom: 1em;
+}
+
+.nav-menu li.has-submenu ul {
+  display: none;
+  padding-left: 20px;
+}
+
+.nav-menu li.has-submenu:hover ul {
+  display: block;
+}
+
+.nav-menu a {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #333;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.nav-menu a:hover {
+  background-color: #f0f0f0;
+}
+
+.nav-menu .active {
+  background-color: #fff;
+  color: #007bff;
+  font-weight: bold;
+}
+
+.nav-menu .active-submenu {
+  color: #007bff;
+}
+
+.nav-menu .submenu a {
+  padding-left: 20px;
+  color: #666;
+}
+
+.nav-menu .parent-menu {
+  position: relative;
+}
+
+.nav-menu .parent-menu::after {
+  content: '▼';
+  position: absolute;
+  right: 10px;
+  font-size: 0.75em;
+  color: #666;
+}
+
+.nav-menu .has-submenu .submenu .active-submenu {
+  font-weight: normal;
+}
