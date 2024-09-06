@@ -1,41 +1,52 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { FaHome, FaUser, FaCog } from 'react-icons/fa';
 import { Button } from '@mui/material'; // Import MUI Button
 import './NavMenu.css';  // Ensure this file contains the updated styles
 
 const NavMenu = () => {
+  const location = useLocation();
+
+  // Helper function to determine if the link is active
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path);
+
   return (
     <nav className="nav-menu">
       <ul className="nav-menu-list">
         <li>
-          <NavLink to="/" exact activeClassName="active" className="nav-link">
-            <FaHome />
-            <span>Home</span>
+          <NavLink to="/" exact className={isActive('/') ? 'active' : ''}>
+            <Button variant="text" className="nav-button">
+              <FaHome />
+              <span>Home</span>
+            </Button>
           </NavLink>
         </li>
-        <li className="has-submenu">
+        <li className={`has-submenu ${isActive('/user') ? 'active' : ''}`}>
           <span className="nav-link no-link">
-            <FaUser />
-            <span>User</span>
+            <Button variant="text" className="nav-button">
+              <FaUser />
+              <span>User</span>
+            </Button>
           </span>
           <ul className="submenu">
             <li>
-              <NavLink to="/user/profile" activeClassName="active-submenu">
-                <Button variant="text">Profile</Button>
+              <NavLink to="/user/profile" className={isActive('/user/profile') ? 'active-submenu' : ''}>
+                <Button variant="text" className="nav-button">Profile</Button>
               </NavLink>
             </li>
             <li>
-              <NavLink to="/user/settings" activeClassName="active-submenu">
-                <Button variant="text">Settings</Button>
+              <NavLink to="/user/settings" className={isActive('/user/settings') ? 'active-submenu' : ''}>
+                <Button variant="text" className="nav-button">Settings</Button>
               </NavLink>
             </li>
           </ul>
         </li>
         <li>
-          <NavLink to="/settings" activeClassName="active" className="nav-link">
-            <FaCog />
-            <span>Settings</span>
+          <NavLink to="/settings" exact className={isActive('/settings') ? 'active' : ''}>
+            <Button variant="text" className="nav-button">
+              <FaCog />
+              <span>Settings</span>
+            </Button>
           </NavLink>
         </li>
       </ul>
@@ -64,7 +75,8 @@ export default NavMenu;
   margin: 0 1em; /* Space between menu items */
 }
 
-.nav-menu .nav-link {
+.nav-menu .nav-link,
+.nav-menu .nav-button {
   display: flex;
   align-items: center;
   text-decoration: none;
@@ -73,11 +85,13 @@ export default NavMenu;
   border-radius: 4px;
 }
 
-.nav-menu .nav-link:hover {
+.nav-menu .nav-link:hover,
+.nav-menu .nav-button:hover {
   background-color: #f0f0f0;
 }
 
-.nav-menu .active {
+.nav-menu .active,
+.nav-menu .active .nav-button {
   background-color: #fff;
   color: #007bff;
   font-weight: bold;
@@ -122,11 +136,4 @@ export default NavMenu;
 
 .nav-menu .no-link {
   cursor: default;
-}
-
-.nav-menu .parent-menu::after {
-  content: '▼';
-  font-size: 0.75em;
-  color: #666;
-  margin-left: 0.5em;
 }
