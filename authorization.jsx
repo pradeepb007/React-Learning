@@ -1,160 +1,152 @@
-import axios from "axios";
-
-/**
- * Stores token details in sessionStorage
- */
-const saveTokenData = ({ access_token, expires_in, refresh_token }) => {
-  sessionStorage.setItem("accessToken", access_token);
-  sessionStorage.setItem("expiresAt", Date.now() + expires_in * 1000); // Convert seconds to milliseconds
-  sessionStorage.setItem("refreshToken", refresh_token);
-};
-
-/**
- * Fetch access token using authorization code
- */
-export const getAccessToken = async () => {
-  const queryParams = new URLSearchParams(window.location.search);
-  const authCode = queryParams.get("code");
-
-  let accessToken = sessionStorage.getItem("accessToken");
-  let expiresAt = sessionStorage.getItem("expiresAt");
-
-  // Check if the token exists and is still valid
-  const isTokenExpired = expiresAt && Date.now() > Number(expiresAt);
-
-  if (accessToken && !isTokenExpired) {
-    return accessToken;
-  }
-
-  if (authCode) {
-    try {
-      const response = await axios.post("https://your-backend.com/api/auth/token", { code: authCode });
-
-      saveTokenData(response.data);
-
-      // Remove auth code from URL
-      window.history.replaceState({}, document.title, "/");
-
-      return response.data.access_token;
-    } catch (error) {
-      console.error("Error fetching access token:", error);
-      clearSession();
-      return null;
-    }
-  } else {
-    return await refreshAccessToken();
-  }
-};
-
-/**
- * Refresh the access token using the refresh token
- */
-export const refreshAccessToken = async () => {
-  const refreshToken = sessionStorage.getItem("refreshToken");
-
-  if (!refreshToken) {
-    clearSession();
-    window.location.href = "/signin"; // Redirect to sign-in
-    return null;
-  }
-
-  try {
-    const response = await axios.post("https://your-backend.com/api/auth/token", { refresh_token: refreshToken });
-
-    saveTokenData(response.data);
-
-    return response.data.access_token;
-  } catch (error) {
-    console.error("Error refreshing access token:", error);
-    clearSession();
-    window.location.href = "/signin"; // Redirect if refresh fails
-    return null;
-  }
-};
-
-/**
- * Clears session storage when authentication fails
- */
-const clearSession = () => {
-  sessionStorage.removeItem("accessToken");
-  sessionStorage.removeItem("expiresAt");
-  sessionStorage.removeItem("refreshToken");
-};
-
-
-
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useLocation } from "react-router-dom";
 import SignIn from "./pages/SignIn";
 import PageLayout from "./components/PageLayout/PageLayout";
-import { getAccessToken } from "./auth/authService";
+import { getAccessToken, refreshAccessToken } from "./auth/pingInstance";
 import { fetchUserProfile } from "./userProfileSlice";
-import { Outlet } from "react-router";
-import { useDispatch } from "react-redux";
+import DefaultLoader from "./components/DefaultLoader";
+
+const useQuery = () => {
+  return new URLSearchParams(useLocation().search);
+};
 
 const App = () => {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isUserProfileCalled, setIsUserProfileCalled] = useState(false);
+  const { fetchAttempted } = useSelector((state) => state.userProfile);
+  const hasFetched = useRef(false);
+  const queryParams = useQuery();
+  const authCode = queryParams.get("code");
 
   useEffect(() => {
-    const authenticateUser = async () => {
-      const token = await getAccessToken();
+    const checkAuth = async () => {
+      const storedAccessToken = sessionStorage.getItem("accessToken");
 
-      if (token) {
+      if (storedAccessToken) {
         setIsAuthenticated(true);
-        if (window.location.pathname === "/signin") {
-          navigate("/"); // Redirect to home after sign-in
+      } else if (authCode && !hasFetched.current) {
+        hasFetched.current = true;
+        const accessToken = await getAccessToken(authCode);
+        if (accessToken) {
+          setIsAuthenticated(true);
         }
-      } else {
-        setIsAuthenticated(false);
       }
     };
 
-    authenticateUser();
-  }, [navigate]);
+    checkAuth();
+  }, [authCode]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      const storedUserData = sessionStorage.getItem("userData");
+    const setStoreData = async () => {
+      if (isAuthenticated && !isUserProfileCalled) {
+        const storedUserData = JSON.parse(sessionStorage.getItem("userData"));
 
-      if (!storedUserData) {
-        dispatch(fetchUserProfile()).then(() => setIsAuthenticated(true));
+        if (!storedUserData && !isUserProfileCalled) {
+          setIsUserProfileCalled(true);
+          const response = await dispatch(fetchUserProfile());
+
+          if (response.payload && response.payload.customerteam === false) {
+            navigate("/unauthorized");
+          } else if (response.error) {
+            navigate("/unauthorized");
+          } else {
+            setIsAuthenticated(true);
+          }
+        } else {
+          setIsAuthenticated(true);
+        }
       }
-    }
-  }, [isAuthenticated, dispatch]);
+    };
 
-  if (!isAuthenticated) {
-    return <SignIn />;
+    setStoreData();
+  }, [isAuthenticated, dispatch, fetchAttempted]);
+
+  useEffect(() => {
+    const tokenExpirationHandler = async () => {
+      const expiresAt = sessionStorage.getItem("expiresAt");
+      if (!expiresAt) return;
+
+      const expirationTime = parseInt(expiresAt, 10);
+      const currentTime = Math.floor(Date.now() / 1000);
+
+      if (currentTime >= expirationTime) {
+        const newAccessToken = await refreshAccessToken();
+        if (newAccessToken) {
+          setIsAuthenticated(true);
+        }
+      }
+    };
+
+    tokenExpirationHandler();
+  }, []);
+
+  if (isAuthenticated && !fetchAttempted) {
+    return <DefaultLoader />;
   }
 
-  return (
+  return isAuthenticated ? (
     <PageLayout>
       <Outlet />
     </PageLayout>
+  ) : (
+    <SignIn />
   );
 };
 
 export default App;
 
 import axios from "axios";
-import { getAccessToken } from "./auth/authService";
 
-export const fetchUserData = async () => {
+export const getAccessToken = async (authCode) => {
+  if (!authCode) return null;
+
   try {
-    const token = await getAccessToken();
-    if (!token) throw new Error("No valid token available");
+    const response = await axios.post("https://your-backend.com/api/auth/token", { code: authCode });
 
-    const response = await axios.get("https://your-backend.com/api/user", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const tokenData = response.data;
+    sessionStorage.setItem("accessToken", tokenData.access_token);
+    sessionStorage.setItem("refreshToken", tokenData.refresh_token);
+    sessionStorage.setItem("expiresAt", String(Math.floor(Date.now() / 1000) + tokenData.expires_in));
 
-    return response.data;
+    window.history.replaceState({}, document.title, "/");
+    return tokenData.access_token;
   } catch (error) {
-    console.error("Failed to fetch user data:", error);
+    console.error("Error fetching access token:", error);
+    clearSession();
     return null;
   }
 };
 
+export const refreshAccessToken = async () => {
+  const refreshToken = sessionStorage.getItem("refreshToken");
+  if (!refreshToken) {
+    clearSession();
+    return null;
+  }
 
+  try {
+    const response = await axios.post("https://your-backend.com/api/auth/token", { refresh_token: refreshToken });
+
+    const tokenData = response.data;
+    sessionStorage.setItem("accessToken", tokenData.access_token);
+    sessionStorage.setItem("refreshToken", tokenData.refresh_token);
+    sessionStorage.setItem("expiresAt", String(Math.floor(Date.now() / 1000) + tokenData.expires_in));
+
+    return tokenData.access_token;
+  } catch (error) {
+    console.error("Error refreshing access token:", error);
+    clearSession();
+    return null;
+  }
+};
+
+const clearSession = () => {
+  sessionStorage.removeItem("accessToken");
+  sessionStorage.removeItem("expiresAt");
+  sessionStorage.removeItem("refreshToken");
+  window.location.href = "/signin";
+};
 
