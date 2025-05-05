@@ -1,0 +1,166 @@
+import React from "react";
+import { useMaterialReactTable, MRT_Table } from "material-react-table";
+import { Tooltip } from "@mui/material";
+
+const EditedTable = () => {
+  const data = [
+    {
+      id: 1,
+      brand: "Brand A",
+      cluster: "North",
+      rTargets: 22000,
+      bars: [
+        {
+          start: "2024-10-01",
+          end: "2025-01-31",
+          a: 12000,
+          b: 10000,
+          color: "#1976d2",
+          tooltip: "Custom info: Oct - Jan",
+        },
+      ],
+    },
+    {
+      id: 2,
+      brand: "Brand B",
+      cluster: "South",
+      rTargets: 36000,
+      bars: [
+        {
+          start: "2024-10-01",
+          end: "2024-12-31",
+          a: 15000,
+          b: 12500,
+        },
+        {
+          start: "2025-01-01",
+          end: "2025-02-28",
+          a: 20000,
+          b: 16000,
+        },
+      ],
+    },
+  ];
+
+  const months = [
+    "2024-10",
+    "2024-11",
+    "2024-12",
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-04",
+    "2025-05",
+    "2025-06",
+  ];
+
+  const getMonthIndex = (month) => months.findIndex((m) => m === month);
+
+  const getBarSpan = (bar) => {
+    const start = bar.start.slice(0, 7);
+    const end = bar.end.slice(0, 7);
+    const startIdx = getMonthIndex(start);
+    const endIdx = getMonthIndex(end);
+    return { startIdx, span: endIdx - startIdx + 1 };
+  };
+
+  const renderBarsGrid = (bars) => (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: `repeat(${months.length},150px)`,
+        gap: 5,
+        position: "relative",
+        height: 30,
+      }}
+    >
+      {bars.map((bar, idx) => {
+        const { startIdx, span } = getBarSpan(bar);
+        const tooltipText =
+          bar.tooltip ||
+          `Start: ${bar.start} | End: ${bar.end} | A: ${bar.a}, B: ${bar.b}`;
+        const bgColor = bar.color || "#1976d2";
+        return (
+          <Tooltip key={idx} title={tooltipText} arrow>
+            <div
+              key={idx}
+              style={{
+                gridColumn: `${startIdx + 1} / span ${span}`,
+                backgroundColor: bgColor,
+                borderRadius: 10,
+                color: "white",
+                display: "flex",
+                gap: 5,
+                alignItems: "center",
+                padding: "0 6px",
+                fontSize: 12,
+                height: "24px",
+                overflow: "hidden",
+              }}
+            >
+              <span style={{ color: "lightgreen" }}>● {bar.a}</span>
+              <span style={{ color: "yellow" }}>● {bar.b}</span>
+            </div>
+          </Tooltip>
+        );
+      })}
+    </div>
+  );
+
+  const columns = [
+    {
+      accessorKey: "brand",
+      header: "Brand",
+      size: 100,
+    },
+    {
+      accessorKey: "cluster",
+      header: "Cluster",
+      size: 100,
+    },
+    {
+      accessorKey: "rTargets",
+      header: "R Targets",
+      size: 100,
+    },
+    {
+      accessorKey: "bars",
+      header: (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${months.length}, 150px)`,
+            fontSize: 12,
+            fontWeight: "bold",
+          }}
+        >
+          {months.map((month) => (
+            <div key={month} style={{ textAlign: "center" }}>
+              {new Date(month + "-01").toLocaleString("default", {
+                month: "short",
+                year: "2-digit",
+              })}
+            </div>
+          ))}
+        </div>
+      ),
+      Cell: ({ cell }) => renderBarsGrid(cell.getValue()),
+      size: months.length * 60, // Adjust size if needed
+    },
+  ];
+
+  const table = useMaterialReactTable({
+    columns,
+    data,
+    enableSorting: false,
+    enablePagination: false,
+    enableColumnResizing: false,
+    enableTopToolbar: false,
+    enableBottomToolbar: false,
+    enableColumnActions: false,
+  });
+
+  return <MRT_Table table={table} />;
+};
+
+export default EditedTable;
