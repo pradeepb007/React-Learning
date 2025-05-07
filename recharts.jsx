@@ -88,3 +88,87 @@ import {
     </Bar>
   </ComposedChart>
 </ResponsiveContainer>
+
+
+import { TooltipProps } from 'recharts';
+
+const CustomTooltip: React.FC<TooltipProps<number, string>> = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div
+        style={{
+          backgroundColor: '#fff',
+          border: '1px solid #ccc',
+          borderRadius: 6,
+          padding: '10px',
+          boxShadow: '0px 2px 6px rgba(0,0,0,0.2)',
+          fontFamily: 'Roboto, sans-serif',
+          fontSize: 14,
+        }}
+      >
+        <div><strong>{label}</strong></div>
+        {payload.map((entry, i) => (
+          <div key={i} style={{ color: entry.color }}>
+            {entry.name}: {entry.value}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return null;
+};
+
+import { TooltipProps } from 'recharts';
+
+<ResponsiveContainer width="100%" height={400}>
+  <ComposedChart data={mergedData}>
+    <CartesianGrid stroke="#eee" />
+    <XAxis
+      dataKey="name"
+      angle={-45}
+      textAnchor="end"
+      height={70}
+      tick={({ x, y, payload }) => {
+        const entry = mergedData.find(d => d.name === payload.value);
+        return (
+          <text
+            x={x}
+            y={y + 15}
+            textAnchor="end"
+            transform={`rotate(-45, ${x}, ${y})`}
+            fontWeight={entry?.bold ? 'bold' : 'normal'}
+            fontSize={12}
+          >
+            {payload.value}
+          </text>
+        );
+      }}
+    />
+    <YAxis />   
+    <Tooltip content={<CustomTooltip />} />
+    <Legend />
+    <Line
+      type="monotone"
+      dataKey="lineValue"
+      stroke="#1976d2"
+      name="Forecasted Shipments"
+      dot={{ r: 2 }}
+    />
+    <Bar dataKey="barValue" barSize={20} name="Event Weeks">
+      {mergedData.map((entry, index) => (
+        <Cell
+          key={`cell-${index}`}
+          fill={entry.alert ? '#d32f2f' : '#388e3c'}
+        />
+      ))}
+    </Bar>
+    <ReferenceLine
+      x="15/03/2025" stroke="#9e9e9e" strokeDasharray="3 3"
+      label={{ value: '← Event Phase', position: 'top', fill: '#616161' }}
+    />
+  </ComposedChart>
+</ResponsiveContainer>
+
+
+
