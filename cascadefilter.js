@@ -166,23 +166,13 @@ function getFilterOptions(fullData, filters) {
     const snapVals = uniqueValues(filteredByPrev, key);
     const selectedItems = filters[key] || [];
 
-    // preserve selected ids
-    const selectedVals = selectedItems.map(f => f.value);
-    const seen = new Set();
-    const combined = [];
+    // Build a lookup of selected values → keep their original id
+    const selectedMap = new Map(selectedItems.map(f => [f.value, f]));
 
-    for (const item of selectedItems) {
-      if (!seen.has(item.value)) {
-        seen.add(item.value);
-        combined.push(item); // keep original {id, name, value}
-      }
-    }
-    for (const v of snapVals) {
-      if (!seen.has(v)) {
-        seen.add(v);
-        combined.push({ id: combined.length, name: String(v), value: v });
-      }
-    }
+    // Preserve snapshot order, re-use existing objects if selected
+    const combined = snapVals.map((v, idx) =>
+      selectedMap.get(v) || { id: idx, name: String(v), value: v }
+    );
 
     snapshots[key] = combined;
   }
