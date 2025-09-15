@@ -130,4 +130,82 @@ function getFilterOptions(fullData, filters) {
 }
 
 
+
+function getFilterOptions(fullData, filters) {
+  if (!fullData || fullData.length === 0) return {};
+
+  const uniqueValues = (data, field) => {
+    const seen = new Set();
+    const out = [];
+    for (const row of data) {
+      const v = row[field];
+      if (v != null && !seen.has(v)) {
+        seen.add(v);
+        out.push(v);
+      }
+    }
+    return out;
+  };
+
+  const allFields = Object.keys(fullData[0]);
+  const selectedKeys = Object.keys(filters || {});
+
+  const snapshots = {};
+  for (let i = 0; i < selectedKeys.length; i++) {
+    const key = selectedKeys[i];
+
+    let filteredByPrev = fullData;
+    for (let j = 0; j < i; j++) {
+      const prevKey = selectedKeys[j];
+      const prevVals = (filters[prevKey] || []).map(f => f.value);
+      if (prevVals.length) {
+        filteredByPrev = filteredByPrev.filter(r => prevVals.includes(r[prevKey]));
+      }
+    }
+
+    const snapVals = uniqueValues(filteredByPrev, key);
+    const selectedItems = filters[key] || [];
+
+    // preserve selected ids
+    const selectedVals = selectedItems.map(f => f.value);
+    const seen = new Set();
+    const combined = [];
+
+    for (const item of selectedItems) {
+      if (!seen.has(item.value)) {
+        seen.add(item.value);
+        combined.push(item); // keep original {id, name, value}
+      }
+    }
+    for (const v of snapVals) {
+      if (!seen.has(v)) {
+        seen.add(v);
+        combined.push({ id: combined.length, name: String(v), value: v });
+      }
+    }
+
+    snapshots[key] = combined;
+  }
+
+  let totalFiltered = fullData;
+  for (const key of selectedKeys) {
+    const vals = (filters[key] || []).map(f => f.value);
+    if (vals.length) totalFiltered = totalFiltered.filter(r => vals.includes(r[key]));
+  }
+
+  const result = {};
+  for (const field of allFields) {
+    if (selectedKeys.includes(field)) {
+      result[field] = snapshots[field];
+    } else {
+      const vals = uniqueValues(totalFiltered, field);
+      result[field] = vals.map((v, idx) => ({ id: idx, name: String(v), value: v }));
+    }
+  }
+
+  return result;
+}
+
+
+
 console.log(getFilterOptions(fullData, filters));
